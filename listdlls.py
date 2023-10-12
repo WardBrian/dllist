@@ -88,9 +88,10 @@ elif platform.system().startswith('Windows'):
         # see https://github.com/JuliaLang/julia/pull/33062
         libraries = []
         process = ctypes.windll.kernel32.GetCurrentProcess()
+        print(process)
         enumerate_loaded_modules = ctypes.windll.dbghelp.EnumerateLoadedModules64
         enumerate_loaded_modules.argtypes = [ctypes.c_int32, ENUM_CALLBACK, ctypes.POINTER(ctypes.py_object)]
-        enumerate_loaded_modules(process, enum_modules_callback, ctypes.pointer(ctypes.py_object(libraries)))
+        print(enumerate_loaded_modules(process, enum_modules_callback, ctypes.pointer(ctypes.py_object(libraries))))
 
         return libraries
 
