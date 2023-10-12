@@ -3,13 +3,13 @@
 # https://github.com/JuliaLang/julia/blob/bed2cd540a11544ed4be381d471bbf590f0b745e/base/libdl.jl#L286-L290
 #
 # https://github.com/JuliaLang/julia/commit/cc7fc96c9f43773c017f06fb255723f00946d693
-# https://learn.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-enumerateloadedmodules64
 
 # maybe write in C and use meson?
 
 import ctypes
 from ctypes.util import find_library
 import platform
+from typing import List
 
 
 # LINUX/BSD (non-apple)
@@ -34,31 +34,42 @@ def info_callback(info, _size, data):
 
     return 0
 
+def _linux_dlllist() -> List[str]:
+    libraries = []
+    ctypes.CDLL(find_library('c')).dl_iterate_phdr(info_callback, ctypes.pointer(ctypes.py_object(libraries)))
+    return libraries
+
 # APPLE
 # https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/dyld.3.html
 
-
-
-def dlllist():
+def _apple_dlllist() -> List[str]:
     libraries = []
-    if platform.system().startswith('Linux'):
-        lib = ctypes.CDLL(find_library('c'))
-        lib.dl_iterate_phdr(info_callback, ctypes.pointer(ctypes.py_object(libraries)))
-    elif platform.system().startswith('Darwin'):
-        lib = ctypes.CDLL(find_library('c'))
-        num_images = lib._dyld_image_count()
-        get_image_name = lib._dyld_get_image_name
-        get_image_name.restype = ctypes.c_char_p
-        for i in range(num_images):
-            name = lib._dyld_get_image_name(i).decode('utf-8')
-            if name:
-                libraries.append(name)
-    elif platform.system().startswith('Windows'):
-        # lib = ctypes.cdll.mscvrt
-        # ctypes.CDLL(find_msvcrt())._get_dll_list(info_callback, ctypes.pointer(ctypes.py_object(libraries)))
-        pass
+    lib = ctypes.CDLL(find_library('c'))
+    num_images = lib._dyld_image_count()
+    get_image_name = lib._dyld_get_image_name
+    get_image_name.restype = ctypes.c_char_p
+    for i in range(num_images):
+        name = lib._dyld_get_image_name(i).decode('utf-8')
+        if name:
+            libraries.append(name)
+
+# WINDOWS
+# https://learn.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-enumerateloadedmodules64
+
+def _windows_dlllist() -> List[str]:
+    libraries = []
+    process = ctypes.windll.kernel32.GetCurrentProcess()
+    print(process)
 
     return libraries
+
+def dlllist() -> List[str]:
+    if platform.system().startswith('Linux'):
+        return _linux_dlllist()
+    elif platform.system().startswith('Darwin'):
+        return _apple_dlllist()
+    elif platform.system().startswith('Windows'):
+       return _windows_dlllist()
 
 
 if __name__ == '__main__':
