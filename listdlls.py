@@ -38,7 +38,9 @@ if platform.system().startswith('Linux'):
 
     def _platform_specific_dllist() -> List[str]:
         libraries = []
-        ctypes.CDLL(find_library('c')).dl_iterate_phdr(info_callback, ctypes.pointer(ctypes.py_object(libraries)))
+        libc = ctypes.CDLL(find_library('c'))
+        libc.dl_iterate_phdr(info_callback, ctypes.pointer(ctypes.py_object(libraries)))
+
         return libraries
 
 # APPLE
@@ -47,14 +49,19 @@ elif platform.system().startswith('Darwin'):
 
     def _platform_specific_dllist() -> List[str]:
         libraries = []
-        lib = ctypes.CDLL(find_library('c'))
-        num_images = lib._dyld_image_count()
-        get_image_name = lib._dyld_get_image_name
+        libc = ctypes.CDLL(find_library('c'))
+
+        num_images = libc._dyld_image_count()
+
+        get_image_name = libc._dyld_get_image_name
         get_image_name.restype = ctypes.c_char_p
+
         for i in range(num_images):
-            name = lib._dyld_get_image_name(i).decode('utf-8')
+            name = libc._dyld_get_image_name(i).decode('utf-8')
             if name:
                 libraries.append(name)
+
+        return libraries
 
 # WINDOWS
 # https://learn.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-enumerateloadedmodules64
@@ -65,10 +72,15 @@ elif platform.system().startswith('Windows'):
     @ENUM_CALLBACK
     def enum_modules_callback(module_name, _module_base, _module_size, data):
         libraries = data.contents.value
-        name = module_name.decode('utf-8')
-        if name:
-            libraries.append(name)
-        return 1
+        print(module_name, _module_base, _module_size)
+
+        try:
+            name = module_name.decode('utf-8')
+            if name:
+                libraries.append(name)
+        except:
+            pass
+        return int(True)
 
 
     def _platform_specific_dllist() -> List[str]:
