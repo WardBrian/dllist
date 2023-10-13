@@ -2,8 +2,9 @@
 
 import platform
 from typing import List
+import warnings
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 _system = platform.system()
 if _system.startswith("Linux"):
@@ -13,10 +14,11 @@ elif _system.startswith("Darwin"):
 elif _system.startswith("Windows"):
     from .windows import _platform_specific_dllist
 else:
-    import warnings
 
     def _platform_specific_dllist() -> List[str]:
-        warnings.warn(f"Unsupported platform {_system}")
+        warnings.warn(
+            f"Unable to list loaded libraries for unsupported platform {_system}"
+        )
         return []
 
 
@@ -32,4 +34,10 @@ def dllist() -> List[str]:
     List[str]
         The names of the dynamic libraries loaded by the current process.
     """
-    return _platform_specific_dllist()
+    try:
+        return _platform_specific_dllist()
+    except Exception as e:
+        warnings.warn(
+            f"Unable to list loaded libraries: {e}",
+        )
+        return []

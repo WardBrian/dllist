@@ -48,6 +48,7 @@ def _platform_specific_dllist() -> List[str]:
     )
     if not success:
         warnings.warn(
+            "Unable to list loaded libraries: "
             f"EnumerateLoadedModules64 failed with error code {ctypes.GetLastError()}"
         )
 
