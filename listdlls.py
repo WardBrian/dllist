@@ -1,15 +1,10 @@
-#
 # A reimplementation of Julia's dllist
-# https://github.com/JuliaLang/julia/blob/bed2cd540a11544ed4be381d471bbf590f0b745e/base/libdl.jl#L286-L290
-#
-# https://github.com/JuliaLang/julia/commit/cc7fc96c9f43773c017f06fb255723f00946d693
-
-# maybe write in C and use meson?
 
 import ctypes
 from ctypes.util import find_library
 import platform
 from typing import List
+import warnings
 
 
 # LINUX/BSD (non-apple)
@@ -32,7 +27,7 @@ if platform.system().startswith('Linux'):
             if name:
                 libraries.append(name)
         except:
-            pass
+            warnings.warn(f'Could not decode library name {info.contents.dlpi_name}')
 
         return 0
 
@@ -57,21 +52,32 @@ elif platform.system().startswith('Darwin'):
         get_image_name.restype = ctypes.c_char_p
 
         for i in range(num_images):
-            name = libc._dyld_get_image_name(i).decode('utf-8')
-            if name:
-                libraries.append(name)
+            raw_name =  libc._dyld_get_image_name(i)
+            try:
+                name = raw_name.decode('utf-8')
+                if name:
+                    libraries.append(name)
+            except:
+                warnings.warn(f'Could not decode library name {raw_name}')
 
         return libraries
 
 # WINDOWS
 # https://learn.microsoft.com/en-us/windows/win32/api/dbghelp/nf-dbghelp-enumerateloadedmodules64
 elif platform.system().startswith('Windows'):
-    # BOOL callback(PCSTR, ULONG, ULONG, PVOID
-    ENUM_CALLBACK = ctypes.WINFUNCTYPE(ctypes.c_int32, ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.py_object))
 
-    @ENUM_CALLBACK
+
+    LPVOID                          = ctypes.c_void_p
+    PVOID                           = LPVOID
+    HANDLE                          = LPVOID
+    BOOL                            = ctypes.c_int32
+    DWORD                           = ctypes.c_uint32
+    PCSTR                           = ctypes.c_char_p
+    ULONG                           = ctypes.c_uint32
+    PENUMLOADED_MODULES_CALLBACK64  = ctypes.WINFUNCTYPE(BOOL, PCSTR, ULONG, ULONG, ctypes.POINTER(ctypes.py_object))
+
+    @PENUMLOADED_MODULES_CALLBACK64
     def enum_modules_callback(module_name, _module_base, _module_size, data):
-        print(module_name, _module_base, _module_size)
         libraries = data.contents.value
 
         try:
@@ -79,21 +85,30 @@ elif platform.system().startswith('Windows'):
             if name:
                 libraries.append(name)
         except:
-            pass
+            warnings.warn(f'Could not decode library name {module_name}')
         return int(True)
 
 
     def _platform_specific_dllist() -> List[str]:
         # could have issues on WINE
         # see https://github.com/JuliaLang/julia/pull/33062
-        libraries = []
+        get_current_process = ctypes.windll.kernel32.GetCurrentProcess
+        get_current_process.restype = HANDLE
         process = ctypes.windll.kernel32.GetCurrentProcess()
-        print(process)
+
+        libraries = []
         enumerate_loaded_modules = ctypes.windll.dbghelp.EnumerateLoadedModules64
-        enumerate_loaded_modules.argtypes = [ctypes.c_int32, ENUM_CALLBACK, ctypes.POINTER(ctypes.py_object)]
-        print(enumerate_loaded_modules(process, enum_modules_callback, ctypes.pointer(ctypes.py_object(libraries))))
+        enumerate_loaded_modules.argtypes = [HANDLE, PENUMLOADED_MODULES_CALLBACK64 , ctypes.POINTER(ctypes.py_object)]
+        success = enumerate_loaded_modules(process, enum_modules_callback, ctypes.pointer(ctypes.py_object(libraries)))
+        if not success:
+            warnings.warn(f'EnumerateLoadedModules64 failed with error code {ctypes.GetLastError()}')
 
         return libraries
+
+else:
+    def _platform_specific_dllist() -> List[str]:
+        warnings.warn(f'Unsupported platform {platform.system()}')
+        return []
 
 def dllist() -> List[str]:
     return _platform_specific_dllist()
