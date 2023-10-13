@@ -14,6 +14,10 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[project.urls]
+"Homepage" = "https://github.com/wardbrian/dllist"
+"Bug Tracker" = "https://github.com/wardbrian/dllist/issues"
+
 [tool.setuptools.dynamic]
 version = { attr = "dllist.__version__" }
 
