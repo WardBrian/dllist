@@ -31,7 +31,7 @@ def test_windows():
     print()
     print("\n".join(dlls))
     assert len(dlls) > 0
-    assert any("kernel32.dll" in dll for dll in dlls)
+    assert any("kernel32.dll" in dll.lower() for dll in dlls)
 
 
 @pytest.mark.skipif(
