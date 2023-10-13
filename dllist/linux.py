@@ -34,7 +34,7 @@ def info_callback(info, _size, data):
 
 
 def _platform_specific_dllist() -> List[str]:
-    libraries = []
+    libraries: List[str] = []
     libc = ctypes.CDLL(find_library("c"))
     libc.dl_iterate_phdr(info_callback, ctypes.pointer(ctypes.py_object(libraries)))
 

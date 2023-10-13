@@ -21,7 +21,7 @@ version = { attr = "dllist.__version__" }
 packages = ["dllist"]
 
 [project.optional-dependencies]
-test = ["pandas", "pytest", "pytest-cov"]
+test = ["pytest", "pytest-cov"]
 
 [tool.isort]
 profile = "black"

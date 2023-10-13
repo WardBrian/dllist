@@ -18,5 +18,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: List loaded libraries
-        run: python -X dev listdlls.py
+      - name: Install
+        run: pip install .[dev]
+
+      - name: Test
+        run: pytest -v -s --cov
