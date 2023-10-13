@@ -3,7 +3,7 @@
 import platform
 from typing import List
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 _system = platform.system()
 if _system.startswith("Linux"):
