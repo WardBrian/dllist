@@ -71,8 +71,8 @@ elif platform.system().startswith('Windows'):
 
     @ENUM_CALLBACK
     def enum_modules_callback(module_name, _module_base, _module_size, data):
-        libraries = data.contents.value
         print(module_name, _module_base, _module_size)
+        libraries = data.contents.value
 
         try:
             name = module_name.decode('utf-8')
