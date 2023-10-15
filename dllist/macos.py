@@ -15,12 +15,10 @@ def _platform_specific_dllist() -> List[str]:
     get_image_name = libc._dyld_get_image_name
     get_image_name.restype = ctypes.c_char_p
 
-    for i in range(num_images):
+    for i in range(1, num_images):
         raw_name = libc._dyld_get_image_name(i)
         try:
             name = raw_name.decode("utf-8")
-            if name:
-                libraries.append(name)
         except:
             warnings.warn(f"Could not decode library name {raw_name}")
 
