@@ -22,8 +22,7 @@ def enum_modules_callback(module_name, _module_base, _module_size, data):
 
     try:
         name = module_name.decode("utf-8")
-        if name:
-            libraries.append(name)
+        libraries.append(name)
     except:
         warnings.warn(f"Could not decode library name {module_name}")
     return int(True)
