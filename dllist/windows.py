@@ -2,6 +2,7 @@ import ctypes
 import warnings
 from ctypes.wintypes import BOOL, DWORD, HANDLE, HMODULE, LPDWORD, LPWSTR
 from typing import List, Optional, Tuple
+from collections.abc import Sequence
 
 # https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-enumprocessmodulesex
 
@@ -32,11 +33,12 @@ def get_module_filename(hModule: HMODULE) -> Optional[str]:
         warnings.warn(
             f"Failed to get module file name for module {hModule}", stacklevel=2
         )
+    return None
 
 
 def get_process_module_handles_partial(
     hProcess: HANDLE, maxbuffsize: int
-) -> Tuple[List[HMODULE], int]:
+) -> Tuple[Sequence[HMODULE], int]:
     _enumerate_loaded_modules = ctypes.windll.psapi.EnumProcessModulesEx
     _enumerate_loaded_modules.argtypes = [
         HANDLE,
@@ -71,7 +73,7 @@ def get_process_module_handles_partial(
     return hModules, bufsize_needed
 
 
-def get_process_module_handles() -> List[HMODULE]:
+def get_process_module_handles() -> Sequence[HMODULE]:
     hProcess = get_current_process()
     first_attempt = 1024
     hModules, buffer_needed = get_process_module_handles_partial(

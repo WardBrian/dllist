@@ -11,14 +11,14 @@ from test import print_list
 from dllist import dllist
 
 
-def test_dllist_basic():
+def test_dllist_basic() -> None:
     dlls = dllist()
     print_list(dlls)
     assert len(dlls) > 0
     assert any("kernel32.dll" in dll.lower() for dll in dlls)
 
 
-def test_euler():
+def test_euler() -> None:
     dlls = dllist()
     num_dlls = len(dlls)
 

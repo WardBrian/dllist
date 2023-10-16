@@ -14,7 +14,7 @@ if (
     pytest.skip(reason="Only runs on unknown platforms", allow_module_level=True)
 
 
-def test_dllist_basic():
+def test_dllist_basic() -> None:
     with pytest.warns(UserWarning):
         dlls = dllist()
     assert len(dlls) == 0

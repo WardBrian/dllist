@@ -17,8 +17,8 @@ def _platform_specific_dllist() -> List[str]:
 
     # start at 1 to skip executable
     for i in range(1, num_images):
+        raw_name = libc._dyld_get_image_name(i)
         try:
-            raw_name = libc._dyld_get_image_name(i)
             name = raw_name.decode("utf-8")
             libraries.append(name)
         except:
