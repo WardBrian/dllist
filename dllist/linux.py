@@ -25,8 +25,7 @@ def info_callback(info, _size, data):
     libraries = data.contents.value
     try:
         name = info.contents.dlpi_name.decode("utf-8")
-        if name:
-            libraries.append(name)
+        libraries.append(name)
     except:
         warnings.warn(f"Could not decode library name {info.contents.dlpi_name}")
 
@@ -37,5 +36,9 @@ def _platform_specific_dllist() -> List[str]:
     libraries: List[str] = []
     libc = ctypes.CDLL(find_library("c"))
     libc.dl_iterate_phdr(info_callback, ctypes.pointer(ctypes.py_object(libraries)))
+
+    if libraries:
+        # remove the first entry, which is the executable itself
+        libraries.pop(0)
 
     return libraries

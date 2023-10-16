@@ -4,7 +4,7 @@ import platform
 from typing import List
 import warnings
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 _system = platform.system()
 if _system.startswith("Linux"):

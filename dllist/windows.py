@@ -50,5 +50,8 @@ def _platform_specific_dllist() -> List[str]:
             "Unable to list loaded libraries: "
             f"EnumerateLoadedModules64 failed with error code {ctypes.GetLastError()}"
         )
+    if libraries:
+        # remove the first entry, which is the executable itself
+        libraries.pop(0)
 
     return libraries
