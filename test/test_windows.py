@@ -22,6 +22,5 @@ def test_euler():
     euler = pytest.importorskip("euler")
 
     dlls2 = dllist()
-    print(dlls2)
     assert len(dlls2) > num_dlls
-    assert any("\\dllist\\test\\test_ext\\euler.cpython" in dll.lower() for dll in dlls2)
+    assert any("\\dllist\\test\\test_ext\\euler.cp" in dll.lower() for dll in dlls2)

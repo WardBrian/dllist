@@ -29,4 +29,4 @@ jobs:
           pip install -e test/test_ext
 
       - name: Test
-        run: pytest -v -s --cov
+        run: pytest -v -s
