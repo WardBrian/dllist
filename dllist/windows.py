@@ -69,7 +69,9 @@ def get_process_module_handles_partial(
 
 def get_process_module_handles() -> List[HMODULE]:
     hProcess = get_current_process()
-    hModules, buffer_needed = get_process_module_handles_partial(hProcess, maxbuffsize=1024)
+    hModules, buffer_needed = get_process_module_handles_partial(
+        hProcess, maxbuffsize=1024
+    )
     if buffer_needed > 1024:
         # retry with larger buffer
         hModules, buffer_needed = get_process_module_handles_partial(
