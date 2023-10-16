@@ -23,4 +23,4 @@ def test_euler():
 
     dlls2 = dllist()
     assert len(dlls2) > num_dlls
-    assert any("\\dllist\\test\\test_ext\\euler.cp" in dll.lower() for dll in dlls2)
+    assert any("\\dllist\\test\\test_éxt\\euler.cp" in dll.lower() for dll in dlls2)
