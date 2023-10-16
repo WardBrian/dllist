@@ -49,7 +49,7 @@ def get_process_module_handles_partial(
         hProcess,
         hModules,
         cb,
-        ctypes.pointer(cbNeeded),
+        ctypes.byref(cbNeeded),
         LIST_MODULES_ALL,
     )
 
