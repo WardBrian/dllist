@@ -24,7 +24,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install
-        run: pip install .[test]
+        run: |
+          pip install .[test]
+          pip install -e test/test_éxt
 
       - name: Test
-        run: pytest -v -s --cov
+        run: pytest -v -s
