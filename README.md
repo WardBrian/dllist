@@ -10,3 +10,13 @@ This is equivalent to the [`dllist`](https://docs.julialang.org/en/v1/stdlib/Lib
 ```
 pip install dllist
 ```
+
+## Usage
+
+```python
+import dllist
+print(dllist.dllist())
+# ['linux-vdso.so.1', '/lib/x86_64-linux-gnu/libpthread.so.0', '/lib/x86_64-linux-gnu/libdl.so.2', ...
+```
+
+Note: The library paths are not postprocessed by this library. Depending on your usage, you may need to convert them to absolute paths and/or perform case-normalization (Windows).
