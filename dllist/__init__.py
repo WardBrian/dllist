@@ -1,8 +1,8 @@
 """A reimplementation of Julia's dllist"""
 
 import platform
-from typing import List
 import warnings
+from typing import List
 
 __version__ = "1.0.2"
 
