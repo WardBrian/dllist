@@ -20,10 +20,15 @@ def get_module_filename(hModule: HMODULE) -> Optional[str]:
     _get_module_filename.restype = DWORD
 
     nSize = 32768  # MAX_PATH
-    lpFilename = ctypes.create_unicode_buffer(nSize)
-    if _get_module_filename(hModule, lpFilename, nSize) != 0:
-        return lpFilename.value
-    else:
+    try:
+        lpFilename = ctypes.create_unicode_buffer(nSize)
+        if _get_module_filename(hModule, lpFilename, nSize) != 0:
+            return lpFilename.value
+        else:
+            warnings.warn(
+                f"Failed to get module file name for module {hModule}", stacklevel=2
+            )
+    except:
         warnings.warn(
             f"Failed to get module file name for module {hModule}", stacklevel=2
         )
@@ -68,15 +73,19 @@ def get_process_module_handles_partial(
 
 def get_process_module_handles() -> List[HMODULE]:
     hProcess = get_current_process()
+    first_attempt = 1024
     hModules, buffer_needed = get_process_module_handles_partial(
-        hProcess, maxbuffsize=1024
+        hProcess, maxbuffsize=first_attempt
     )
-    if buffer_needed > 1024:
-        # retry with larger buffer
+    if buffer_needed > first_attempt:
+        # We need a bigger buffer, but luckily we know how big it needs to be
         hModules, buffer_needed = get_process_module_handles_partial(
             hProcess, maxbuffsize=buffer_needed
         )
-    return hModules[:buffer_needed]
+
+    # skip first entry, which is the executable itself,
+    # and trim the list to the number of modules actually loaded
+    return hModules[1:buffer_needed]
 
 
 def _platform_specific_dllist() -> List[str]:
@@ -85,9 +94,5 @@ def _platform_specific_dllist() -> List[str]:
     libraries = [
         name for hMod in hModules if (name := get_module_filename(hMod)) is not None
     ]
-
-    if libraries:
-        # remove the first entry, which is the executable itself
-        libraries.pop(0)
 
     return libraries
