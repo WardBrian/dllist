@@ -1,8 +1,7 @@
 import ctypes
 import warnings
 from ctypes.wintypes import BOOL, DWORD, HANDLE, HMODULE, LPDWORD, LPWSTR
-from typing import List, Optional, Tuple
-from collections.abc import Sequence
+from typing import List, Optional, Sequence, Tuple
 
 # https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-enumprocessmodulesex
 
