@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dllist"
+description = "List the shared libraries loaded by the current process."
 readme = "README.md"
 authors = [{ name = "Brian Ward", email = "bward@flatironinstitute.org" }]
 requires-python = ">=3.8"
