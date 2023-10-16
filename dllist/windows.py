@@ -22,7 +22,6 @@ def get_module_filename(hModule: HMODULE) -> Optional[str]:
     nSize = 32768  # MAX_PATH
     lpFilename = ctypes.create_unicode_buffer(nSize)
     if _get_module_filename(hModule, lpFilename, nSize) != 0:
-        # encoding?
         return lpFilename.value
     else:
         warnings.warn(
