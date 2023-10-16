@@ -69,13 +69,13 @@ def get_process_module_handles_partial(
 
 def get_process_module_handles() -> List[HMODULE]:
     hProcess = get_current_process()
-    hModules, cb_needed = get_process_module_handles_partial(hProcess, maxbuffsize=1024)
-    if cb_needed > 1024:
+    hModules, buffer_needed = get_process_module_handles_partial(hProcess, maxbuffsize=1024)
+    if buffer_needed > 1024:
         # retry with larger buffer
-        hModules, _ = get_process_module_handles_partial(
-            hProcess, maxbuffsize=cb_needed
+        hModules, buffer_needed = get_process_module_handles_partial(
+            hProcess, maxbuffsize=buffer_needed
         )
-    return hModules
+    return hModules[:buffer_needed]
 
 
 def _platform_specific_dllist() -> List[str]:
