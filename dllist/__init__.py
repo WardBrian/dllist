@@ -7,7 +7,7 @@ from typing import List
 __version__ = "1.1.0"
 
 _system = platform.system()
-if _system.startswith("Linux"):
+if _system.startswith("Linux") or _system.startswith("FreeBSD"):
     from .linux import _platform_specific_dllist
 elif _system.startswith("Darwin"):
     from .macos import _platform_specific_dllist

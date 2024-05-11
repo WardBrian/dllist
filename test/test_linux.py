@@ -2,8 +2,9 @@ import platform
 
 import pytest
 
-if not platform.system().startswith("Linux"):
-    pytest.skip(reason="Linux only", allow_module_level=True)
+system = platform.system()
+if not (system.startswith("Linux") or system.startswith("FreeBSD")):
+    pytest.skip(reason="Linux and FreeBSD only", allow_module_level=True)
 
 
 from test import print_list

@@ -8,6 +8,7 @@ system = platform.system()
 
 if (
     system.startswith("Linux")
+    or system.startswith("FreeBSD")
     or system.startswith("Darwin")
     or system.startswith("Windows")
 ):
