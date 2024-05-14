@@ -1,99 +1,66 @@
 import ctypes
 import warnings
-from ctypes.wintypes import BOOL, DWORD, HANDLE, HMODULE, LPDWORD, LPWSTR
-from typing import List, Optional, Sequence, Tuple
+from ctypes import wintypes
+from typing import List, Optional
 
-# https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-enumprocessmodulesex
+# https://learn.microsoft.com/windows/win32/api/psapi/nf-psapi-enumprocessmodules
+# https://learn.microsoft.com/windows/win32/api/libloaderapi/nf-libloaderapi-getmodulefilenamew
 
-LIST_MODULES_ALL = 3  # 0x03
+_kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+_psapi = ctypes.WinDLL('psapi', use_last_error=True)
 
+_kernel32.GetCurrentProcess.restype = wintypes.HANDLE
 
-def get_current_process() -> HANDLE:
-    _get_current_process = ctypes.windll.kernel32.GetCurrentProcess
-    _get_current_process.restype = HANDLE
-    return _get_current_process()
+_kernel32.GetModuleFileNameW.restype = wintypes.DWORD
+_kernel32.GetModuleFileNameW.argtypes = (
+    wintypes.HMODULE,
+    wintypes.LPWSTR,
+    wintypes.DWORD,
+)
 
+_psapi.EnumProcessModules.restype = wintypes.BOOL
+_psapi.EnumProcessModules.argtypes = (
+    wintypes.HANDLE,
+    ctypes.POINTER(wintypes.HMODULE),
+    wintypes.DWORD,
+    wintypes.LPDWORD,
+)
 
-def get_module_filename(hModule: HMODULE) -> Optional[str]:
-    _get_module_filename = ctypes.windll.kernel32.GetModuleFileNameW
-    _get_module_filename.argtypes = [HMODULE, LPWSTR, DWORD]
-    _get_module_filename.restype = DWORD
-
-    nSize = 32768  # MAX_PATH
-    try:
-        lpFilename = ctypes.create_unicode_buffer(nSize)
-        if _get_module_filename(hModule, lpFilename, nSize) != 0:
-            return lpFilename.value
-        else:
-            warnings.warn(
-                f"Failed to get module file name for module {hModule}", stacklevel=2
-            )
-    except:
-        warnings.warn(
-            f"Failed to get module file name for module {hModule}", stacklevel=2
-        )
+def get_module_filename(hModule: wintypes.HMODULE) -> Optional[str]:
+    name = (wintypes.WCHAR * 32767)() # UNICODE_STRING_MAX_CHARS
+    if _kernel32.GetModuleFileNameW(hModule, name, len(name)):
+        return name.value
+    error = ctypes.get_last_error()
+    warnings.warn(f"Failed to get module file name for module {hModule}: "
+                  f"GetModuleFileNameW failed with error code {error}",
+                  stacklevel=2)
     return None
 
 
-def get_process_module_handles_partial(
-    hProcess: HANDLE, maxbuffsize: int
-) -> Tuple[Sequence[HMODULE], int]:
-    _enumerate_loaded_modules = ctypes.windll.psapi.EnumProcessModulesEx
-    _enumerate_loaded_modules.argtypes = [
-        HANDLE,
-        ctypes.POINTER(HMODULE),
-        DWORD,
-        LPDWORD,
-        DWORD,
-    ]
-    _enumerate_loaded_modules.restype = BOOL
-    cb = DWORD(maxbuffsize * ctypes.sizeof(HMODULE))
-    cbNeeded = DWORD(0)
-
-    hModules = (HMODULE * maxbuffsize)()
-    success = _enumerate_loaded_modules(
-        hProcess,
-        hModules,
-        cb,
-        ctypes.byref(cbNeeded),
-        LIST_MODULES_ALL,
-    )
-
-    if not success:
-        warnings.warn(
-            "Unable to list loaded libraries: "
-            f"EnumProcessModulesEx failed with error code {ctypes.GetLastError()}",
-            stacklevel=3,
-        )
-        return [], 0
-
-    bufsize_needed = cbNeeded.value // ctypes.sizeof(HMODULE)
-
-    return hModules, bufsize_needed
-
-
-def get_process_module_handles() -> Sequence[HMODULE]:
-    hProcess = get_current_process()
-    first_attempt = 1024
-    hModules, buffer_needed = get_process_module_handles_partial(
-        hProcess, maxbuffsize=first_attempt
-    )
-    if buffer_needed > first_attempt:
-        # We need a bigger buffer, but luckily we know how big it needs to be
-        hModules, buffer_needed = get_process_module_handles_partial(
-            hProcess, maxbuffsize=buffer_needed
-        )
-
-    # skip first entry, which is the executable itself,
-    # and trim the list to the number of modules actually loaded
-    return hModules[1:buffer_needed]
+def get_module_handles() -> List[int]:
+    hProcess = _kernel32.GetCurrentProcess()
+    cbNeeded = wintypes.DWORD()
+    n = 1024
+    while True:
+        modules = (wintypes.HMODULE * n)()
+        if not _psapi.EnumProcessModules(hProcess,
+                                         modules,
+                                         ctypes.sizeof(modules),
+                                         ctypes.byref(cbNeeded)):
+            break
+        n = cbNeeded.value // ctypes.sizeof(wintypes.HMODULE)
+        if n <= len(modules):
+            return modules[:n]
+    error = ctypes.get_last_error()
+    warnings.warn("Unable to list loaded libraries: EnumProcessModules "
+                  f"failed with error code {error}",
+                  stacklevel=2)
+    return []
 
 
 def _platform_specific_dllist() -> List[str]:
-    hModules = get_process_module_handles()
-
-    libraries = [
-        name for hMod in hModules if (name := get_module_filename(hMod)) is not None
-    ]
-
+    # skip first entry, which is the executable itself
+    modules = get_module_handles()[1:]
+    libraries = [name for h in modules
+                    if (name := get_module_filename(h)) is not None]
     return libraries
