@@ -11,6 +11,7 @@ if (
     _system.startswith("linux")
     or _system.startswith("freebsd")
     or _system.startswith("openbsd")
+    or _system.startswith("sunos")
     or _system.startswith("solaris")
 ):
     from .unix_like import _platform_specific_dllist
