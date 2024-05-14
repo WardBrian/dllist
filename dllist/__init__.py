@@ -17,7 +17,7 @@ if (
     from .unix_like import _platform_specific_dllist
 elif _system.startswith("darwin"):
     from .macos import _platform_specific_dllist
-elif _system.startswith("windows"):
+elif _system.startswith("windows") or _system.startswith("microsoft"):
     from .windows import _platform_specific_dllist
 else:
 
