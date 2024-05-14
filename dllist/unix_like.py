@@ -3,7 +3,11 @@ import warnings
 from ctypes.util import find_library
 from typing import List
 
+# this uses functions common to Linux and a few other Unix-like systems
 # https://man7.org/linux/man-pages/man3/dl_iterate_phdr.3.html
+# https://man.freebsd.org/cgi/man.cgi?query=dl_iterate_phdr
+# https://man.openbsd.org/dl_iterate_phdr
+# https://docs.oracle.com/cd/E88353_01/html/E37843/dl-iterate-phdr-3c.html
 
 
 class dl_phdr_info(ctypes.Structure):

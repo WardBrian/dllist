@@ -4,14 +4,19 @@ import platform
 import warnings
 from typing import List
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
-_system = platform.system()
-if _system.startswith("Linux") or _system.startswith("FreeBSD"):
-    from .linux import _platform_specific_dllist
-elif _system.startswith("Darwin"):
+_system = platform.system().lower()
+if (
+    _system.startswith("linux")
+    or _system.startswith("freebsd")
+    or _system.startswith("openbsd")
+    or _system.startswith("solaris")
+):
+    from .unix_like import _platform_specific_dllist
+elif _system.startswith("darwin"):
     from .macos import _platform_specific_dllist
-elif _system.startswith("Windows"):
+elif _system.startswith("windows"):
     from .windows import _platform_specific_dllist
 else:
 
