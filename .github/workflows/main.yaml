@@ -45,6 +45,7 @@ jobs:
           '"
           --health-start-period 45s
           --health-timeout 240s
+          --device /dev/kvm
 
     steps:
       - name: Checkout repository
