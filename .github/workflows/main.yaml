@@ -30,3 +30,79 @@ jobs:
 
       - name: Test
         run: pytest -v -s
+
+  test-freebsd:
+    runs-on: ubuntu-latest
+
+    services:
+      freebsd:
+        image: ghcr.io/tunedal/freebsd-qemu-container-python:1.0
+        ports:
+          - 2222
+        options: >-
+          --health-cmd "bash -c '
+          grep -m1 SSH </dev/tcp/localhost/2222 || exit 1
+          '"
+          --health-start-period 45s
+          --health-timeout 240s
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Retrieve service container configuration
+        run: |
+          docker cp ${{ job.services.freebsd.id }}:/mnt/config/ config
+          ls -l config
+
+      - name: Configure SSH client
+        run: |
+          cat >>config/ssh <<"EOF"
+          Host freebsd
+            Hostname localhost
+            Port ${{ job.services.freebsd.ports[2222] }}
+            User root
+            IdentityFile config/client_key
+            UserKnownHostsFile config/known_hosts
+          EOF
+
+      - name: Copy application files to VM
+        run: |
+          ssh -F config/ssh freebsd mkdir -p /tmp/dllist
+          tar zcf - --exclude ./config --exclude-vcs . | \
+            ssh -F config/ssh freebsd \
+            tar zxvf - -C /tmp/dllist
+
+      - name: Install for Python 3.8
+        run: |
+          ssh -F config/ssh freebsd '
+            cd /tmp/dllist
+            python3.8 -m venv env38
+            source env38/bin/activate.csh
+            pip install ".[test]"
+            pip install -e "test/test_éxt"
+          '
+
+      - name: Install for Python 3.11
+        run: |
+          ssh -F config/ssh freebsd '
+            cd /tmp/dllist
+            python3.11 -m venv env311
+            source env311/bin/activate.csh
+            pip install ".[test]"
+            pip install -e "test/test_éxt"
+          '
+
+      - name: Test on Python 3.8
+        run: |
+          ssh -F config/ssh freebsd '
+            cd /tmp/dllist
+            env38/bin/pytest -v -s
+          '
+
+      - name: Test on Python 3.11
+        run: |
+          ssh -F config/ssh freebsd '
+            cd /tmp/dllist
+            env311/bin/pytest -v -s
+          '
